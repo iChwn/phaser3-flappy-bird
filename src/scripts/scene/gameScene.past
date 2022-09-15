@@ -10,23 +10,12 @@ let player1Score;
 let player2Score;
 let gameSceneProp;
 let isPressSpace = false;
-let tiltPlatform;
 
-let pipePositionX = 300;
-let pipePositionY = 470;
-let pipeDownSprite;
 
 var typingTimer;
 var doneTypingInterval = 500; 
 
 const {difficulty, paddleConfig} = gameSetting
-
-let PipeDownClass = new Phaser.Class({
-  Extends: Phaser.GameObjects.Image,
-  initialize: function PipeDownClass(scene) {
-    Phaser.GameObjects.Image.call(this, scene, 0, 0, "pipe-green");
-  }
-})
 
 const GameScene = new Phaser.Class({
   Extends: Phaser.Scene,
@@ -44,17 +33,10 @@ const GameScene = new Phaser.Class({
     this.load.image("bird-mid-flap", "./src/assets/images/yellowbird-midflap.png")
     this.load.image("bird-up-flap", "./src/assets/images/yellowbird-downflap.png")
     this.load.image("bird-down-flap", "./src/assets/images/yellowbird-upflap.png")
-    this.load.image("pipe-green", "./src/assets/images/pipe-green.png")
     this.load.image("red", "./src/assets/images/red.png")
   },
   create: function () {
     pauseScreen("GameScene", gameSceneProp)
-
-    pipeDownSprite = this.physics.add.group({
-      classType: PipeDownClass,
-      runChildrenUpdate: true,
-      allowGravity: false
-    })
 
     let bg = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'game-bg')
     let scaleX = this.cameras.main.width / bg.width
@@ -67,10 +49,6 @@ const GameScene = new Phaser.Class({
     platform.displayWidth = this.cameras.main.width;
     platform.setCollideWorldBounds(true);
     platform.setImmovable(true)
-
-    console.log(platform)
-    tiltPlatform = this.add.tileSprite(this.cameras.main.width / 2, platform.body.y, 450, platform.body.height - 25, "platform");
-    tiltPlatform.setDepth(1)
     
     bird = this.physics.add.sprite(
       this.physics.world.bounds.width / 2,
@@ -79,7 +57,6 @@ const GameScene = new Phaser.Class({
     )
     bird.displayHeight = 30
     bird.displayWidth = 40
-    // bird.setDepth(2)
     bird.setGravity(0, 500)
     bird.setCollideWorldBounds(true);
     bird.setBounce(1,1);
@@ -112,26 +89,10 @@ const GameScene = new Phaser.Class({
   
     // this.physics.add.collider(bird, player1, () => console.log("hit"), null, this)
     this.physics.add.collider(bird, platform, null, null, this)
-    this.physics.add.collider(bird, pipeDownSprite, () => console.log("TT"), null, this)
     // this.physics.add.collider(bird, player1, colliderP1Callback, null, this)
     // this.physics.add.collider(bird, player2, colliderP2Callback, null, this)
   },
   update: function (time, delta) {
-    if(time%9 === 0) {
-      if(time%6 === 0) {
-        pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX* 2, pipePositionY*2)
-      } else {
-        pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX+100, pipePositionY+40)
-      }
-
-      pipeDownSprite.setVelocityX(-100)
-      pipePositionX += 100
-    }
-    
-
- 
-    
-    tiltPlatform.tilePositionX += 2;
     // if(!isGameStarted) {
     //   const initialVeloY = (Math.random() * 300) + 100;
     //   const initialVeloX = (Math.random() * 300) + 100;
