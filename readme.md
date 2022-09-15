@@ -1,0 +1,1 @@
+to serve the server type npx http-server on terminal
