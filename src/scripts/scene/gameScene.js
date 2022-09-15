@@ -119,7 +119,7 @@ const GameScene = new Phaser.Class({
   update: function (time, delta) {
     if(time%9 === 0) {
       if(time%6 === 0) {
-        pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX* 2, pipePositionY*2)
+        pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY)
       } else {
         pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX+100, pipePositionY+40)
       }
