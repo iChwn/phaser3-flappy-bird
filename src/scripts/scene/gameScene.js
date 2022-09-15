@@ -12,7 +12,7 @@ let gameSceneProp;
 let isPressSpace = false;
 let tiltPlatform;
 
-let pipePositionX = 300;
+let pipePositionX = 500;
 let pipePositionY = 470;
 let pipeDownSprite;
 
@@ -67,10 +67,10 @@ const GameScene = new Phaser.Class({
     platform.displayWidth = this.cameras.main.width;
     platform.setCollideWorldBounds(true);
     platform.setImmovable(true)
+    platform.setDepth(1)
 
-    console.log(platform)
     tiltPlatform = this.add.tileSprite(this.cameras.main.width / 2, platform.body.y, 450, platform.body.height - 25, "platform");
-    tiltPlatform.setDepth(1)
+    tiltPlatform.setDepth(2)
     
     bird = this.physics.add.sprite(
       this.physics.world.bounds.width / 2,
@@ -117,16 +117,21 @@ const GameScene = new Phaser.Class({
     // this.physics.add.collider(bird, player2, colliderP2Callback, null, this)
   },
   update: function (time, delta) {
-    if(time%9 === 0) {
-      if(time%6 === 0) {
-        pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY)
-      } else {
-        pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX+100, pipePositionY+40)
-      }
-
+    if(time > 2000) {
+      pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY)
       pipeDownSprite.setVelocityX(-100)
       pipePositionX += 100
     }
+    // if(time%9 === 0) {
+    //   if(time%6 === 0) {
+    //     pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY)
+    //   } else {
+    //     pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX+100, pipePositionY+40)
+    //   }
+
+    //   pipeDownSprite.setVelocityX(-100)
+    //   pipePositionX += 100
+    // }
     
 
  
@@ -176,7 +181,7 @@ const GameScene = new Phaser.Class({
     if(!isPressSpace) {
       if(keys.space.isDown) {
         clearTimeout(typingTimer);
-        rotateBird({self: this, target: bird, direction: -30}) 
+        rotateBird({self: this, target: bird, direction: -30, duration: 100}) 
         isPressSpace = true
         bird.setVelocityY(-250)
         bird.setTexture("bird-up-flap")
@@ -190,7 +195,7 @@ const GameScene = new Phaser.Class({
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => {
           bird.setTexture("bird-down-flap")
-          rotateBird({self, target: bird, direction: 60})
+          rotateBird({self, target: bird, direction: 60, duration: 200})
         }, doneTypingInterval);
         // console.log("UNHOLD")
       }   
@@ -203,12 +208,12 @@ const GameScene = new Phaser.Class({
   },
 });
 
-function rotateBird({self, target, direction}) {
+function rotateBird({self, target, direction, duration}) {
   self.tweens.add({
     targets: target,
     angle: direction,
     ease: "Linear", // 'Cubic', 'Elastic', 'Bounce', 'Back'
-    duration: 100,
+    duration: duration,
     repeat: 0,
     yoyo: false
   });
