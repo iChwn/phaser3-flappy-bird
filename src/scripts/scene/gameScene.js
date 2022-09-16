@@ -1,20 +1,19 @@
 let isGameStarted = false;
 let bird;
 let platform;
-let player1;
-let player2;
 let cursors;
 let keys = {};
 const paddleSpeed = 1000
 let player1Score;
-let player2Score;
 let gameSceneProp;
 let isPressSpace = false;
 let tiltPlatform;
 
-let pipePositionX = 500;
+let pipePositionX = 450;
 let pipePositionY = 470;
 let pipeDownSprite;
+let pipeTopSprite;
+let initCounter = false;
 
 var typingTimer;
 var doneTypingInterval = 500; 
@@ -24,7 +23,14 @@ const {difficulty, paddleConfig} = gameSetting
 let PipeDownClass = new Phaser.Class({
   Extends: Phaser.GameObjects.Image,
   initialize: function PipeDownClass(scene) {
-    Phaser.GameObjects.Image.call(this, scene, 0, 0, "pipe-green");
+    Phaser.GameObjects.Image.call(this, scene, 0, 0, "pipe-green-bottom");
+  }
+})
+
+let PipeTopClass = new Phaser.Class({
+  Extends: Phaser.GameObjects.Image,
+  initialize: function PipeTopClass(scene) {
+    Phaser.GameObjects.Image.call(this, scene, 0, 0, "pipe-green-top");
   }
 })
 
@@ -44,7 +50,8 @@ const GameScene = new Phaser.Class({
     this.load.image("bird-mid-flap", "./src/assets/images/yellowbird-midflap.png")
     this.load.image("bird-up-flap", "./src/assets/images/yellowbird-downflap.png")
     this.load.image("bird-down-flap", "./src/assets/images/yellowbird-upflap.png")
-    this.load.image("pipe-green", "./src/assets/images/pipe-green.png")
+    this.load.image("pipe-green-bottom", "./src/assets/images/pipe-green-bottom.png")
+    this.load.image("pipe-green-top", "./src/assets/images/pipe-green-top.png")
     this.load.image("red", "./src/assets/images/red.png")
   },
   create: function () {
@@ -53,7 +60,15 @@ const GameScene = new Phaser.Class({
     pipeDownSprite = this.physics.add.group({
       classType: PipeDownClass,
       runChildrenUpdate: true,
-      allowGravity: false
+      allowGravity: false,
+      immovable: true
+    })
+
+    pipeTopSprite = this.physics.add.group({
+      classType: PipeTopClass,
+      runChildrenUpdate: true,
+      allowGravity: false,
+      immovable: true
     })
 
     let bg = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'game-bg')
@@ -74,36 +89,18 @@ const GameScene = new Phaser.Class({
     
     bird = this.physics.add.sprite(
       this.physics.world.bounds.width / 2,
-      this.physics.world.bounds.height / 2,
+      this.physics.world.bounds.height / 2.2,
       "bird-mid-flap"
     )
     bird.displayHeight = 30
     bird.displayWidth = 40
-    // bird.setDepth(2)
-    bird.setGravity(0, 500)
+    bird.setDepth(3)
+    bird.setGravity(0, 1000)
     bird.setCollideWorldBounds(true);
     bird.setBounce(1,1);
   
-    player1 = this.physics.add.sprite(
-      this.physics.world.bounds.width - (bird.body.width / 2 + 1),
-      this.physics.world.bounds.height / 2,
-      "paddle"
-    )
-    player1.displayHeight = paddleConfig.paddleLength[gameSetting.difficulty]
-    player1.setCollideWorldBounds(true);
-    player1.setImmovable(true)
-
-    player1Score = this.add.text(this.physics.world.bounds.width - 130, 20, `Score P1: ${gameScore.player1}`);  
-    player2Score = this.add.text(20, 20, `Score P2: ${gameScore.player2}`);
-  
-    player2 = this.physics.add.sprite(
-      bird.body.width / 2 + 1,
-      this.physics.world.bounds.height / 2,
-      "paddle"
-    )
-    player2.displayHeight = paddleConfig.paddleLength[gameSetting.difficulty]
-    player2.setCollideWorldBounds(true);
-    player2.setImmovable(true)
+    player1Score = this.add.text(this.physics.world.bounds.width - 130, 20, `Score: 0`);  
+    player1Score.setDepth(1)
   
     cursors = this.input.keyboard.createCursorKeys();
     keys.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -112,78 +109,37 @@ const GameScene = new Phaser.Class({
   
     // this.physics.add.collider(bird, player1, () => console.log("hit"), null, this)
     this.physics.add.collider(bird, platform, null, null, this)
-    this.physics.add.collider(bird, pipeDownSprite, () => console.log("TT"), null, this)
-    // this.physics.add.collider(bird, player1, colliderP1Callback, null, this)
-    // this.physics.add.collider(bird, player2, colliderP2Callback, null, this)
+    this.physics.add.collider(bird, pipeDownSprite, () => setWinnerText(this, "Game Over"), null, this)
+    this.physics.add.collider(bird, pipeTopSprite, () => setWinnerText(this, "Game Over"), null, this)
   },
   update: function (time, delta) {
     if(time > 2000) {
-      pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY)
-      pipeDownSprite.setVelocityX(-100)
-      pipePositionX += 100
+      if(time > 3000) {
+        player1Score.setText('Score: ' + (msToS(time) - 2));
+        player1Score.setDepth(2)
+      }
+      let randomY = randomNumber(50, 100)
+
+      pipeTopSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, randomY)
+      pipeTopSprite.setVelocityX(-210)
+
+      pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY + randomY)
+      pipeDownSprite.setVelocityX(-210)
+      pipePositionX += 200
     }
-    // if(time%9 === 0) {
-    //   if(time%6 === 0) {
-    //     pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, pipePositionY)
-    //   } else {
-    //     pipeDownSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX+100, pipePositionY+40)
-    //   }
-
-    //   pipeDownSprite.setVelocityX(-100)
-    //   pipePositionX += 100
-    // }
-    
-
- 
     
     tiltPlatform.tilePositionX += 2;
-    // if(!isGameStarted) {
-    //   const initialVeloY = (Math.random() * 300) + 100;
-    //   const initialVeloX = (Math.random() * 300) + 100;
-    //   bird.setVelocityX(initialVeloX)
-    //   bird.setVelocityY(initialVeloY)
-    //   isGameStarted = true
-    // }
-    
+
     if(bird.body.y > platform.body.y - 35) {
-      // gameScore.player2 = gameScore.player2 + 1
       setWinnerText(this, "Game Over")
     }
-    // if(bird.body.x < player2.body.x) {
-    //   gameScore.player1 = gameScore.player1 + 1     
-    //   setWinnerText(this, "Player 1 Win")
-    // }
-  
-    player1.body.setVelocityY(0)  
-    player2.body.setVelocityY(0)
-  
-    player1.body.setVelocityY(bird.body.velocity.y)
-    player2.body.setVelocityY(bird.body.velocity.y)
-  
-    if(cursors.up.isDown) {
-      player1.body.setVelocityY(-paddleSpeed)
-    }
-    if(cursors.down.isDown) {
-      player1.body.setVelocityY(paddleSpeed)
-    }
-    if(keys.w.isDown) {
-      player2.body.setVelocityY(-paddleSpeed)
-    }
-    if(keys.s.isDown) {
-      player2.body.setVelocityY(paddleSpeed)
-    }
-    if(keys.s.isDown) {
-      player2.body.setVelocityY(paddleSpeed)
-    }
-
-    // console.log(bird.body.velocity.y) 
 
     if(!isPressSpace) {
       if(keys.space.isDown) {
         clearTimeout(typingTimer);
         rotateBird({self: this, target: bird, direction: -30, duration: 100}) 
         isPressSpace = true
-        bird.setVelocityY(-250)
+        bird.setVelocityY(-400)
         bird.setTexture("bird-up-flap")
       }   
     } else {
@@ -195,7 +151,7 @@ const GameScene = new Phaser.Class({
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => {
           bird.setTexture("bird-down-flap")
-          rotateBird({self, target: bird, direction: 60, duration: 200})
+          rotateBird({self, target: bird, direction: 60, duration: 100})
         }, doneTypingInterval);
         // console.log("UNHOLD")
       }   
@@ -230,8 +186,7 @@ function colliderP2Callback() {
 }
 
 function renderScore() {
-  player1Score.setText('Score P1: ' + gameScore.player1);
-  player2Score.setText('Score P2: ' + gameScore.player2);
+  player1Score.setText('Score: 0');
 }
 
 function handlebirdSpeed(bird, player) {
@@ -240,7 +195,6 @@ function handlebirdSpeed(bird, player) {
   const logic = player === "p1" ? ">" : "<"
   const isValid = eval(bird.body.velocity.x + logic + pSpeed);
 
-  console.log(bird.body.velocity.x)
   if(isValid) {
     bird.setVelocityX(bird.body.velocity.x + counterSpeed)
     bird.setVelocityY(bird.body.velocity.y + counterSpeed)
@@ -284,27 +238,8 @@ function setWinnerText(self, victoryText) {
     victoryText
   )
   playerVictoryTex.setOrigin(.5);
+  // bird.body.y = 620
   
   pauseScreen("pause")
-  gameSceneProp.scene.launch('RetryScene');
-
-
-  // let retry = data.add.text(
-  //   data.physics.world.bounds.width / 2,
-  //   data.physics.world.bounds.height / 1.6,
-  //   "Retry?"
-  // )
-  // retry.setOrigin(.5);
-
-  // let mainMenu = data.add.text(
-  //   data.physics.world.bounds.width / 2,
-  //   data.physics.world.bounds.height / 1.4,
-  //   "Main Menu"
-  // )
-  // mainMenu.setInteractive().on('pointerdown', function() {
-  //   console.log(data)
-  //   data.scene.scene.start('MenuScene');
-  // });
-  // mainMenu.setOrigin(.5);
-
+  // gameSceneProp.scene.launch('RetryScene');
 }
