@@ -11,11 +11,12 @@ const RetryScene = new Phaser.Class({
   create: function () {
       let restart = this.add.text(
         this.physics.world.bounds.width / 2,
-        this.physics.world.bounds.height / 1.5, 
+        this.physics.world.bounds.height / 2.2, 
         'Retry?');
 
       restart.setInteractive().on('pointerdown', function() {
-        this.scene.scene.start('GameScene');
+        // this.scene.scene.start('GameScene');
+        window.location.reload()
       });
       restart.setOrigin(.5);
 

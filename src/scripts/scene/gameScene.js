@@ -3,8 +3,8 @@ let bird;
 let platform;
 let cursors;
 let keys = {};
+let pointer;
 const paddleSpeed = 1000
-let player1Score;
 let gameSceneProp;
 let isPressSpace = false;
 let tiltPlatform;
@@ -53,6 +53,16 @@ const GameScene = new Phaser.Class({
     this.load.image("pipe-green-bottom", "./src/assets/images/pipe-green-bottom.png")
     this.load.image("pipe-green-top", "./src/assets/images/pipe-green-top.png")
     this.load.image("red", "./src/assets/images/red.png")
+    this.load.image("0", "./src/assets/images/0.png")
+    this.load.image("1", "./src/assets/images/1.png")
+    this.load.image("2", "./src/assets/images/2.png")
+    this.load.image("3", "./src/assets/images/3.png")
+    this.load.image("4", "./src/assets/images/4.png")
+    this.load.image("5", "./src/assets/images/5.png")
+    this.load.image("6", "./src/assets/images/6.png")
+    this.load.image("7", "./src/assets/images/7.png")
+    this.load.image("8", "./src/assets/images/8.png")
+    this.load.image("9", "./src/assets/images/9.png")
   },
   create: function () {
     pauseScreen("GameScene", gameSceneProp)
@@ -98,14 +108,17 @@ const GameScene = new Phaser.Class({
     bird.setGravity(0, 1000)
     bird.setCollideWorldBounds(true);
     bird.setBounce(1,1);
-  
-    player1Score = this.add.text(this.physics.world.bounds.width - 130, 20, `Score: 0`);  
-    player1Score.setDepth(1)
+
+    this.scoreboardLeft = this.add.image(this.cameras.main.width / 2.1, this.cameras.main.height / 5, '0')
+    this.scoreboardLeft.setDepth(1)
+    this.scoreboardRight = this.add.image(this.cameras.main.width / 1.8, this.cameras.main.height / 5, '0')
+    this.scoreboardRight.setDepth(1)
   
     cursors = this.input.keyboard.createCursorKeys();
     keys.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     keys.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     keys.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    pointer = this.input;
   
     // this.physics.add.collider(bird, player1, () => console.log("hit"), null, this)
     this.physics.add.collider(bird, platform, null, null, this)
@@ -113,12 +126,18 @@ const GameScene = new Phaser.Class({
     this.physics.add.collider(bird, pipeTopSprite, () => setWinnerText(this, "Game Over"), null, this)
   },
   update: function (time, delta) {
+    let self = this
     if(time > 2000) {
       if(time > 3000) {
-        player1Score.setText('Score: ' + (msToS(time) - 2));
-        player1Score.setDepth(2)
+        let mtos = msToS(time) - 2
+        if(mtos.toString().split("")[1]) {
+          this.scoreboardRight.setTexture(mtos.toString().split("")[1])
+          this.scoreboardLeft.setTexture(mtos.toString().split("")[0])
+        } else {
+          this.scoreboardRight.setTexture(mtos.toString().split("")[0])
+        }
       }
-      let randomY = randomNumber(50, 100)
+      let randomY = randomNumber(0, 150)
 
       pipeTopSprite.get().setActive(true).setVisible(true).setPosition(pipePositionX, randomY)
       pipeTopSprite.setVelocityX(-210)
@@ -156,6 +175,14 @@ const GameScene = new Phaser.Class({
         // console.log("UNHOLD")
       }   
     }
+
+    pointer.on('pointerdown', function(pointer){
+      clearTimeout(typingTimer);
+      rotateBird({self: self, target: bird, direction: -30, duration: 100}) 
+      isPressSpace = true
+      bird.setVelocityY(-400)
+      bird.setTexture("bird-up-flap")
+    });
   
     // if(bird.body.velocity.y > paddleSpeed) {
     //   console.log("bird max speed")
@@ -183,10 +210,6 @@ function colliderP1Callback() {
 function colliderP2Callback() {
   handlebirdSpeed(bird, "p2")
   setParticle(this, bird, "blue")
-}
-
-function renderScore() {
-  player1Score.setText('Score: 0');
 }
 
 function handlebirdSpeed(bird, player) {
@@ -230,7 +253,6 @@ function setWinnerText(self, victoryText) {
   isGameStarted = false
   bird.body.setVelocityX(0)
   bird.body.setVelocityY(0)
-  renderScore() 
   
   let playerVictoryTex = data.add.text(
     data.physics.world.bounds.width / 2,
@@ -241,5 +263,5 @@ function setWinnerText(self, victoryText) {
   // bird.body.y = 620
   
   pauseScreen("pause")
-  // gameSceneProp.scene.launch('RetryScene');
+  gameSceneProp.scene.launch('RetryScene');
 }

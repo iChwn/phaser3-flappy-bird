@@ -37,7 +37,7 @@ function pauseScreen(sceneName, gameSceneProp) {
         gameSceneProp.scene.pause(sceneName)
       }
       if(event.key === "r") {
-        gameSceneProp.scene.resume(sceneName)
+        gameSceneProp.scene.start(sceneName)
       }
     };
   }
